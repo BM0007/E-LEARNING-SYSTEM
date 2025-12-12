@@ -1,34 +1,336 @@
-# Gradle files
-.gradle/
-build/
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #1a2a6c;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .range-value {
+            text-align: center;
+            font-weight: bold;
+            color: #1a2a6c;
+            margin-bottom: 15px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1a2a6c;
+        }
+        button {
+            background: #1a2a6c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        button:hover {
+            background: #0f1a47;
+        }
+        .password-output {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin-bottom: 15px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .strength-meter {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .strength-meter-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transform: translateX(200%);
+            transition: transform 0.3s ease-out;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .options-container {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .copy-btn {
+            background: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Secure Password Generator</h1>
+        
+        <div class="options-container">
+            <div class="form-group">
+                <label for="length">Password Length: <span id="lengthValue">12</span></label>
+                <input type="range" id="length" min="6" max="50" value="12">
+            </div>
+            
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="uppercase" checked>
+                    <label for="uppercase">Uppercase (A-Z)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="lowercase" checked>
+                    <label for="lowercase">Lowercase (a-z)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="numbers" checked>
+                    <label for="numbers">Numbers (0-9)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="symbols" checked>
+                    <label for="symbols">Symbols (!@#$%^&*)</label>
+                </div>
+            </div>
+        </div>
+        
+        <button id="generateBtn">Generate Password</button>
+        
+        <div class="password-output" id="passwordOutput">Click "Generate Password" to create a secure password</div>
+        
+        <div class="strength-meter">
+            <div class="strength-meter-fill" id="strengthMeter"></div>
+        </div>
+        
+        <button id="copyBtn" class="copy-btn">
+            <span>📋</span> Copy to Clipboard
+        </button>
+    </div>
 
-# Local configuration file (sdk path, etc)
-local.properties
+    <div class="notification" id="notification">Password copied to clipboard!</div>
 
-# Log/OS Files
-*.log
-
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
-
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Keystore files
-*.jks
-*.keystore
-
-# Google Services (e.g. APIs or Firebase)
-google-services.json
-
-# Android Profiling
-*.hprof
+    <script>
+        // DOM elements
+        const lengthSlider = document.getElementById('length');
+        const lengthValue = document.getElementById('lengthValue');
+        const uppercaseCheck = document.getElementById('uppercase');
+        const lowercaseCheck = document.getElementById('lowercase');
+        const numbersCheck = document.getElementById('numbers');
+        const symbolsCheck = document.getElementById('symbols');
+        const generateBtn = document.getElementById('generateBtn');
+        const passwordOutput = document.getElementById('passwordOutput');
+        const strengthMeter = document.getElementById('strengthMeter');
+        const copyBtn = document.getElementById('copyBtn');
+        const notification = document.getElementById('notification');
+        
+        // Character sets
+        const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+        const numberChars = '0123456789';
+        const symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        
+        // Update length display
+        lengthSlider.addEventListener('input', () => {
+            lengthValue.textContent = lengthSlider.value;
+        });
+        
+        // Generate password
+        generateBtn.addEventListener('click', generatePassword);
+        
+        function generatePassword() {
+            let charset = '';
+            let password = '';
+            
+            // Build character set based on options
+            if (uppercaseCheck.checked) charset += uppercaseChars;
+            if (lowercaseCheck.checked) charset += lowercaseChars;
+            if (numbersCheck.checked) charset += numberChars;
+            if (symbolsCheck.checked) charset += symbolChars;
+            
+            // Ensure at least one character type is selected
+            if (charset === '') {
+                showNotification('Please select at least one character type!', 'error');
+                return;
+            }
+            
+            // Generate password
+            const length = parseInt(lengthSlider.value);
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * charset.length);
+                password += charset[randomIndex];
+            }
+            
+            // Ensure password contains at least one of each selected type
+            if (uppercaseCheck.checked && !/[A-Z]/.test(password)) {
+                const randomIndex = Math.floor(Math.random() * password.length);
+                const randomUpper = uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)];
+                password = password.substring(0, randomIndex) + randomUpper + password.substring(randomIndex + 1);
+            }
+            
+            if (lowercaseCheck.checked && !/[a-z]/.test(password)) {
+                const randomIndex = Math.floor(Math.random() * password.length);
+                const randomLower = lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)];
+                password = password.substring(0, randomIndex) + randomLower + password.substring(randomIndex + 1);
+            }
+            
+            if (numbersCheck.checked && !/[0-9]/.test(password)) {
+                const randomIndex = Math.floor(Math.random() * password.length);
+                const randomNumber = numberChars[Math.floor(Math.random() * numberChars.length)];
+                password = password.substring(0, randomIndex) + randomNumber + password.substring(randomIndex + 1);
+            }
+            
+            if (symbolsCheck.checked && !/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+                const randomIndex = Math.floor(Math.random() * password.length);
+                const randomSymbol = symbolChars[Math.floor(Math.random() * symbolChars.length)];
+                password = password.substring(0, randomIndex) + randomSymbol + password.substring(randomIndex + 1);
+            }
+            
+            // Display password
+            passwordOutput.textContent = password;
+            
+            // Update strength meter
+            updateStrengthMeter(password);
+        }
+        
+        // Update strength meter
+        function updateStrengthMeter(Password) {
+            let strength = 0;
+            
+            // Length contributes to strength
+            strength += Math.min(password,Under ,All DataTransfer,DataTransferItemList
+            
+            .length * 4, 40);
+            
+            // Character variety contributes to strength
+            if (/[A-Z]/.test(password)) strength += 10;
+            if (/[a-z]/.test(password)) strength += 10;
+            if (/[0-9]/.test(password)) strength += 10;
+            if (/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength += 15;
+            
+            // Cap at 100%
+            strength = Math.min(strength, 100);
+            
+            // Update meter
+            strengthMeter.style.width = strength + '%';
+            
+            // Change color based on strength
+            if (strength < 40) {
+                strengthMeter.style.backgroundColor = '#f44336'; // Weak
+            } else if (strength < 70) {
+                strengthMeter.style.backgroundColor = '#ff9800'; // Medium
+            } else {
+                strengthMeter.style.backgroundColor = '#4CAF50'; // Strong
+            }
+        }
+        
+        // Copy to clipboard
+        copyBtn.addEventListener('click', () => {
+            if (passwordOutput.textContent === 'Click "Generate Password" to create a secure password') {
+                showNotification('Generate a password first!', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(passwordOutput.textContent)
+                .then(() => {
+                    showNotification('Password copied to clipboard!');
+                })
+                .catch(err => {
+                    showNotification('Failed to copy password', 'error');
+                    console.error('Copy error:', err);
+                });
+        });
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notification.textContent = message;
+            notification.className = 'notification show';
+            
+            if (type === 'error') {
+                notification.style.backgroundColor = '#f44336';
+            } else {
+                notification.style.backgroundColor = '#4CAF50';
+            }
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Generate initial password
+        generatePassword();
+    </script>
+</body>
+</html>
