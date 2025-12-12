@@ -313,7 +313,7 @@
                 });
         });
         
-        // Show notification
+        
         function showNotification(message, type = 'success') {
             notification.textContent = message;
             notification.className = 'notification show';
